@@ -1,37 +1,37 @@
-let auth_token = $state()
-let error_str = $state()
+let authToken = $state<string | null>(
+    typeof window === "undefined" ? null : localStorage.getItem("authToken")
+);
 
-export function getAuthToken() {
-    return auth_token
+export function getAuthToken(): string | null {
+    return authToken;
 }
 
 export async function signIn(email: string, password: string): Promise<void> {
-    try {
-        const response = await fetch(
-            "/api/auth/login",
-            {
-                method: "POST",
-                body: JSON.stringify({
-                    email: email,
-                    password: password
-                })
-            }
-        )
+    const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+    });
 
-        const data = await response.json()
-
-        auth_token = data.auth_token;
-    } catch (e) {
-        const error = e as Error;
-        console.error(error)
-        error_str = error.message
+    if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.detail ?? "Unable to sign in.");
     }
+
+    const data: { access_token: string; token_type: string } = await response.json();
+    authToken = data.access_token;
+    localStorage.setItem("authToken", authToken);
+}
+
+export function signOut(): void {
+    authToken = null;
+    localStorage.removeItem("authToken");
 }
 
 export async function apiRequest(url: string, options: RequestInit = {}): Promise<Response> {
     const headers = new Headers(options.headers);
-    if (auth_token != '') {
-        headers.set("Authorization", `Bearer ${auth_token}`);
+    if (authToken) {
+        headers.set("Authorization", `Bearer ${authToken}`);
     }
 
     return await fetch(url, {

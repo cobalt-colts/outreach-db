@@ -1,28 +1,29 @@
-import datetime
+from datetime import datetime, timedelta, timezone
 import os
-import sqlite3
-import tomllib
-from http.client import HTTPException
-from time import timezone
+from pathlib import Path
 from typing import Any
 
+import argon2
 import jwt
 from argon2 import PasswordHasher
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from starlette.responses import JSONResponse
 
-from app.database import get_user_from_email, PROJECT_ROOT
-from app.models import LoginModel
+from app.database import PROJECT_ROOT, get_user, get_user_from_email, update_password_hash
+from app.models import CurrentUserResponse, LoginModel, TokenResponse
 
-auth = APIRouter(prefix="/api/auth")
 
-bearer = HTTPBearer()
+JWT_ALGORITHM = "RS256"
+TOKEN_LIFETIME = timedelta(hours=24)
+auth = APIRouter(prefix="/auth", tags=["authentication"])
+bearer = HTTPBearer(auto_error=False)
 ph = PasswordHasher()
+
 
 def _project_path(value: str | Path) -> Path:
     path = Path(value).expanduser()
     return path if path.is_absolute() else PROJECT_ROOT / path
+
 
 def _load_jwt_key(environment_name: str, default_path: Path) -> str:
     configured_path = os.getenv(environment_name)
@@ -36,61 +37,90 @@ def _load_jwt_key(environment_name: str, default_path: Path) -> str:
         ) from error
 
 
-with (PROJECT_ROOT / "conf" / "config.toml").open("rb") as file:
-    conf = tomllib.load(file)
-
 jwt_ssh_dir = _project_path(os.getenv("JWT_SSH_DIR", "~/.ssh"))
-RSA_PRIVATE_KEY = _load_jwt_key(
-    "JWT_PRIVATE_KEY_PATH", jwt_ssh_dir / "id_rsa_jwt"
-)
-RSA_PUBLIC_KEY = _load_jwt_key(
-    "JWT_PUBLIC_KEY_PATH", jwt_ssh_dir / "id_rsa_jwt.pub"
-)
+RSA_PRIVATE_KEY = _load_jwt_key("JWT_PRIVATE_KEY_PATH", jwt_ssh_dir / "id_rsa_jwt")
+RSA_PUBLIC_KEY = _load_jwt_key("JWT_PUBLIC_KEY_PATH", jwt_ssh_dir / "id_rsa_jwt.pub")
+
+
+def _unauthorized(detail: str = "invalid email or password") -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail=detail,
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
 
 async def get_auth_payload(
-        credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
 ) -> dict[str, Any]:
     if credentials is None or credentials.scheme.lower() != "bearer":
-        raise HTTPException(401, "missing or invalid authorization")
+        raise _unauthorized("missing or invalid authorization")
 
     try:
         payload = jwt.decode(
             credentials.credentials,
             RSA_PUBLIC_KEY,
-            algorithms=["RS256"],
+            algorithms=[JWT_ALGORITHM],
             options={"require": ["exp", "uid", "permissions"]},
         )
     except jwt.InvalidTokenError as error:
-        raise HTTPException(401, "invalid or expired token") from error
+        raise _unauthorized("invalid or expired token") from error
 
     uid = payload.get("uid")
-    if isinstance(uid, bool) or not isinstance(uid, int):
-        raise HTTPException(401, "invalid token payload")
+    permissions = payload.get("permissions")
+    if (
+        isinstance(uid, bool)
+        or not isinstance(uid, int)
+        or isinstance(permissions, bool)
+        or not isinstance(permissions, int)
+    ):
+        raise _unauthorized("invalid token payload")
+
+    user = get_user(uid)
+    if user is None or user["permission_level"] != permissions:
+        raise _unauthorized("invalid token payload")
 
     return payload
 
-@auth.get
-async def _api_login(body: LoginModel):
-    try:
-        user = get_user_from_email(body.email)
-    except sqlite3.Error as e:
-        raise HTTPException(403, "User not found")
+
+@auth.post("/login", response_model=TokenResponse)
+async def login(body: LoginModel) -> TokenResponse:
+    email = body.email.strip().lower()
+    user = get_user_from_email(email)
+    if user is None:
+        raise _unauthorized()
 
     try:
-        ph.verify(body.password, user['password'])
-    except Exception:
-        raise HTTPException(403, "Incorrect password")
+        ph.verify(user["password_argon2"], body.password)
+    except (argon2.exceptions.VerificationError, argon2.exceptions.InvalidHashError) as error:
+        raise _unauthorized() from error
 
-    authtoken = jwt.encode(
+    if ph.check_needs_rehash(user["password_argon2"]):
+        update_password_hash(user["id"], ph.hash(body.password))
+
+    issued_at = datetime.now(timezone.utc)
+    access_token = jwt.encode(
         {
-            "id": user["id"],
+            "uid": user["id"],
             "permissions": user["permission_level"],
-            "exp": int((datetime.now(timezone.utc) + datetime.timedelta(hours=24)).timestamp()),
+            "iat": issued_at,
+            "exp": issued_at + TOKEN_LIFETIME,
         },
         RSA_PRIVATE_KEY,
-        algorithm="RS256",
+        algorithm=JWT_ALGORITHM,
     )
+    return TokenResponse(access_token=access_token)
 
-    return JSONResponse({"auth_token": authtoken})
 
+@auth.get("/me", response_model=CurrentUserResponse)
+async def get_current_user(
+    payload: dict[str, Any] = Depends(get_auth_payload),
+) -> CurrentUserResponse:
+    user = get_user(payload["uid"])
+    if user is None:
+        raise _unauthorized("invalid token payload")
+    return CurrentUserResponse(
+        id=user["id"],
+        email=user["email"],
+        permission_level=user["permission_level"],
+    )

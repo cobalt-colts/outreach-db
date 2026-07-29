@@ -1,31 +1,16 @@
-import os
-import tomllib
 from contextlib import asynccontextmanager
-from functools import wraps
-from inspect import isawaitable
 from pathlib import Path
-from typing import Any
 
-import argon2
-import jwt
-from argon2 import PasswordHasher
-from fastapi import APIRouter, Depends, FastAPI, HTTPException
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel
+from fastapi import APIRouter, FastAPI, HTTPException
 from starlette.responses import FileResponse
 from starlette.staticfiles import StaticFiles
 
-from app.database import apply_sql_folder, get_user
+from app.database import apply_sql_folder
 from app.auth import auth
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 BUILD_DIR = PROJECT_ROOT / "build"
-
-
-def _project_path(value: str | Path) -> Path:
-    path = Path(value).expanduser()
-    return path if path.is_absolute() else PROJECT_ROOT / path
 
 
 @asynccontextmanager

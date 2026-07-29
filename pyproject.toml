@@ -8,4 +8,5 @@ dependencies = [
     "argon2-cffi>=25.1.0",
     "fastapi[standard]>=0.139.0",
     "pyjwt[crypto]>=2.13.0",
+    "redis>=8.0.1",
 ]

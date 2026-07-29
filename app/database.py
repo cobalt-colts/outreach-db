@@ -7,9 +7,6 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DB_PATH = PROJECT_ROOT / "conf" / "db.sqlite"
 DEFAULT_MIGRATIONS_PATH = Path(__file__).resolve().parent / "migrations"
 
-conn = sqlite3.connect(DEFAULT_DB_PATH)
-cur = conn.cursor()
-
 def apply_sql_folder(
     db_path: str | Path = DEFAULT_DB_PATH,
     folder_path: str | Path = DEFAULT_MIGRATIONS_PATH,
@@ -37,6 +34,23 @@ def get_user(uid: int, db_path: str | Path = DEFAULT_DB_PATH) -> dict[Any, Any] 
 
     return dict(row) if row is not None else None
 
-def get_user_from_email(email):
-    res = cur.execute("SELECT id, email, password_argon2, permission_level FROM users WHERE email = ?", (email,)).fetchone()
-    return res
+def get_user_from_email(email: str, db_path: str | Path = DEFAULT_DB_PATH) -> dict[str, Any] | None:
+    """Return the user for an email address without sharing SQLite connections."""
+    with sqlite3.connect(db_path) as connection:
+        connection.row_factory = sqlite3.Row
+        row = connection.execute(
+            "SELECT id, email, password_argon2, permission_level FROM users WHERE email = ?",
+            (email,),
+        ).fetchone()
+
+    return dict(row) if row is not None else None
+
+
+def update_password_hash(
+    uid: int, password_hash: str, db_path: str | Path = DEFAULT_DB_PATH
+) -> None:
+    """Persist an upgraded Argon2 password hash after a successful login."""
+    with sqlite3.connect(db_path) as connection:
+        connection.execute(
+            "UPDATE users SET password_argon2 = ? WHERE id = ?", (password_hash, uid)
+        )
