@@ -8,9 +8,16 @@ import jwt
 from argon2 import PasswordHasher
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlmodel import Session
 
-from app.database import PROJECT_ROOT, get_user, get_user_from_email, update_password_hash
-from app.models import CurrentUserResponse, LoginModel, TokenResponse
+from app.database import (
+    PROJECT_ROOT,
+    get_session,
+    get_user,
+    get_user_from_email,
+    update_password_hash,
+)
+from app.models import CurrentUserResponse, LoginModel, TokenResponse, User
 
 
 JWT_ALGORITHM = "RS256"
@@ -50,8 +57,9 @@ def _unauthorized(detail: str = "invalid email or password") -> HTTPException:
     )
 
 
-async def get_auth_payload(
+def get_auth_payload(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
+    session: Session = Depends(get_session),
 ) -> dict[str, Any]:
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise _unauthorized("missing or invalid authorization")
@@ -76,33 +84,36 @@ async def get_auth_payload(
     ):
         raise _unauthorized("invalid token payload")
 
-    user = get_user(uid)
-    if user is None or user["permission_level"] != permissions:
+    user = get_user(session, uid)
+    if user is None or user.permission_level != permissions:
         raise _unauthorized("invalid token payload")
 
     return payload
 
 
 @auth.post("/login", response_model=TokenResponse)
-async def login(body: LoginModel) -> TokenResponse:
+def login(
+    body: LoginModel,
+    session: Session = Depends(get_session),
+) -> TokenResponse:
     email = body.email.strip().lower()
-    user = get_user_from_email(email)
+    user = get_user_from_email(session, email)
     if user is None:
         raise _unauthorized()
 
     try:
-        ph.verify(user["password_argon2"], body.password)
+        ph.verify(user.password_argon2, body.password)
     except (argon2.exceptions.VerificationError, argon2.exceptions.InvalidHashError) as error:
         raise _unauthorized() from error
 
-    if ph.check_needs_rehash(user["password_argon2"]):
-        update_password_hash(user["id"], ph.hash(body.password))
+    if ph.check_needs_rehash(user.password_argon2):
+        update_password_hash(session, user, ph.hash(body.password))
 
     issued_at = datetime.now(timezone.utc)
     access_token = jwt.encode(
         {
-            "uid": user["id"],
-            "permissions": user["permission_level"],
+            "uid": user.id,
+            "permissions": user.permission_level,
             "iat": issued_at,
             "exp": issued_at + TOKEN_LIFETIME,
         },
@@ -113,17 +124,11 @@ async def login(body: LoginModel) -> TokenResponse:
 
 
 @auth.get("/me", response_model=CurrentUserResponse)
-async def get_current_user(
+def get_current_user(
     payload: dict[str, Any] = Depends(get_auth_payload),
+    session: Session = Depends(get_session),
 ) -> CurrentUserResponse:
-    user = get_user(payload["uid"])
+    user = get_user(session, payload["uid"])
     if user is None:
         raise _unauthorized("invalid token payload")
-    return CurrentUserResponse(
-        id=user["id"],
-        email=user["email"],
-        permission_level=user["permission_level"],
-        first_name=user["first_name"],
-        last_name=user["last_name"],
-        team_number=user["team_number"]
-    )
+    return user

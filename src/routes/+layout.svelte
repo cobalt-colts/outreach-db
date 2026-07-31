@@ -28,7 +28,9 @@
     }
 
     onMount(() => {
-        checkToken();
+        if(getAuthToken()) {
+            checkToken();
+        }
     })
 </script>
 
