@@ -2,8 +2,28 @@ let authToken = $state<string | null>(
     typeof window === "undefined" ? null : localStorage.getItem("authToken")
 );
 
+export type CurrentUser = {
+    id: number;
+    email: string;
+    permission_level: number;
+    first_name: string;
+    last_name: string;
+    team_number: number;
+};
+
 export function getAuthToken(): string | null {
     return authToken;
+}
+
+export function clearAuthToken(): void {
+    authToken = null;
+    localStorage.removeItem("authToken");
+}
+
+export function logOut(): void {
+    authToken = null;
+    localStorage.removeItem("authToken");
+    window.location.reload();
 }
 
 export async function signIn(email: string, password: string): Promise<void> {
@@ -26,6 +46,19 @@ export async function signIn(email: string, password: string): Promise<void> {
 export function signOut(): void {
     authToken = null;
     localStorage.removeItem("authToken");
+}
+
+export async function getMe(): Promise<CurrentUser> {
+    const response = await apiRequest("/api/auth/me", {
+        headers: { Accept: "application/json" },
+    });
+
+    if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.detail ?? "Unable to fetch the current user.");
+    }
+
+    return await response.json() as CurrentUser;
 }
 
 export async function apiRequest(url: string, options: RequestInit = {}): Promise<Response> {

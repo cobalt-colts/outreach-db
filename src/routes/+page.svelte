@@ -1,10 +1,11 @@
 <script lang="ts">
-    let name = $state('')
+    import Navbar from "$lib/components/blocks/navbar.svelte";
 </script>
 
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>
-<input bind:value={name} type="text" placeholder="Your name" />
-{#if name}
-    <p>Hello, {name}</p>
-{/if}
+<main>
+    <div class="m-5 justify-center flex">
+        <h1 class="font-bold text-5xl mt-25">
+            Browse outreach events
+        </h1>
+    </div>
+</main>

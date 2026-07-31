@@ -15,3 +15,13 @@ class CurrentUserResponse(BaseModel):
     id: int
     email: str
     permission_level: int
+    first_name: str
+    last_name: str
+    team_number: int
+
+class OutreachEvent(BaseModel):
+    id: int
+    name: str
+    location: str
+    description: str
+    link: str

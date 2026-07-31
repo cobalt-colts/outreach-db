@@ -123,4 +123,7 @@ async def get_current_user(
         id=user["id"],
         email=user["email"],
         permission_level=user["permission_level"],
+        first_name=user["first_name"],
+        last_name=user["last_name"],
+        team_number=user["team_number"]
     )

@@ -1,5 +1,9 @@
 <script lang="ts">
-    import {getAuthToken, signIn} from "$lib/auth.svelte";
+    import { getAuthToken, signIn } from "$lib/auth.svelte";
+    import Button from "$lib/components/ui/button.svelte";
+    import Card from "$lib/components/ui/card.svelte";
+    import Input from "$lib/components/ui/input.svelte";
+    import {onMount} from "svelte";
 
     let email = $state("");
     let password = $state("");
@@ -13,6 +17,7 @@
         try {
             await signIn(email, password);
             password = "";
+            window.location.href = "/";
         } catch (cause) {
             error = cause instanceof Error ? cause.message : "Unable to sign in.";
         } finally {
@@ -20,27 +25,26 @@
         }
     }
 
+    onMount(() => {
+        if (getAuthToken()) {
+            window.location.href = "/";
+        }
+    })
 </script>
 
-{#if !getAuthToken()}
-    <main class="flex min-h-screen items-center justify-center p-6">
-        <form class="flex w-full max-w-sm flex-col gap-4 rounded-lg border-2 border-black p-6" onsubmit={logIn}>
+<main class="flex items-center align-middle justify-center p-6">
+    <Card>
+        <form onsubmit={logIn} class="flex flex-col gap-4">
             <h1 class="text-2xl font-extrabold">Login</h1>
 
-            <input class="w-full border-2 border-black p-2" bind:value={email} type="email" autocomplete="email" placeholder="Email" required />
-            <input class="w-full border-2 border-black p-2" bind:value={password} type="password" autocomplete="current-password" placeholder="Password" required />
-            <button class="border-2 border-black p-2" type="submit" disabled={submitting}>
+            <Input bind:value={email} type="email" autocomplete="email" placeholder="Email" required />
+            <Input bind:value={password} type="password" autocomplete="current-password" placeholder="Password" required />
+            <Button type="submit" disabled={submitting}>
                 {submitting ? "Logging in…" : "Login"}
-            </button>
+            </Button>
             {#if error}
                 <p role="alert">{error}</p>
             {/if}
         </form>
-    </main>
-{:else}
-    <main class="min-h-screen items-center justify-center p-6">
-        <h1 class="text-2xl font-extrabold">logged in!</h1>
-        <p>You are logged in.</p>
-        <p>auth token: {getAuthToken()}</p>
-    </main>
-{/if}
+    </Card>
+</main>
