@@ -61,6 +61,10 @@ export async function getMe(): Promise<CurrentUser> {
     return await response.json() as CurrentUser;
 }
 
+export async function getPermissionLevel(): Promise<number> {
+    return (await getMe()).permission_level;
+}
+
 export async function apiRequest(url: string, options: RequestInit = {}): Promise<Response> {
     const headers = new Headers(options.headers);
     if (authToken) {

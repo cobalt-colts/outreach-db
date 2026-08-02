@@ -1,4 +1,4 @@
-from sqlalchemy import CheckConstraint
+from sqlalchemy import CheckConstraint, UniqueConstraint
 from sqlmodel import Field, SQLModel
 
 
@@ -38,6 +38,11 @@ class User(SQLModel, table=True):
 
 class OutreachEvent(SQLModel, table=True):
     __tablename__ = "outreach_events"
+    __table_args__ = (
+        UniqueConstraint(
+            "name", "location", "description", "link", name="unique_event"
+        ),
+    )
 
     id: int | None = Field(default=None, primary_key=True)
     name: str
@@ -48,6 +53,7 @@ class OutreachEvent(SQLModel, table=True):
 
 class OutreachEventTag(SQLModel, table=True):
     __tablename__ = "outreach_event_tags"
+    __table_args__ = (UniqueConstraint("event_id", "tag", name="unique_event_tags"),)
 
     id: int | None = Field(default=None, primary_key=True)
     event_id: int = Field(
