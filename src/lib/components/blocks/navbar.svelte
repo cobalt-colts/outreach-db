@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
 
-    import {getAuthToken, getMe, logOut, type CurrentUser, getPermissionLevel} from "$lib/auth.svelte";
+    import {getAuthToken, getMe, logOut, type CurrentUser} from "$lib/auth.svelte";
 
     let me = $state<CurrentUser | null>(null);
 
@@ -19,9 +19,9 @@
 <div class="w-full flex flex-row flex-1 min-w-0 h-auto mb-2 border-b border-black p-5 justify-between">
     <div class="flex flex-row items-start justify-start gap-5 align-middle">
         <a href="/" class="font-bold text-xl">Outreach DB</a>
-        <!--{#if await getPermissionLevel() === 0}-->
-        <!--    <a class="self-center text-md" href="/admin">Admin</a>-->
-        <!--{/if}-->
+        {#if me?.permission_level === 0}
+            <a class="self-center text-md" href="/admin">Admin</a>
+        {/if}
     </div>
     <div class="flex flex-row items-start justify-start gap-5">
         {#if getAuthToken()}
