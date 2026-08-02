@@ -6,6 +6,7 @@ __pycache__/
 
 # Local data
 conf/*.sqlite
+conf/config.toml
 
 # IDEs
 .idea/
