@@ -1,7 +1,8 @@
-export interface Event {
+export interface OutreachEvent {
     id: number;
     name: string;
     location: string
     description: string
-    link: string;
+    link: string
+    tags: string[];
 }

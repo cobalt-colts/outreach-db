@@ -4,6 +4,7 @@
     import { onMount } from "svelte";
     import { clearAuthToken, getAuthToken } from "$lib/auth.svelte";
     import Navbar from '$lib/components/blocks/navbar.svelte';
+    import { Toaster } from 'svelte-sonner';
 
     let { children } = $props();
 
@@ -35,5 +36,6 @@
 </script>
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
+<Toaster richColors/>
 <Navbar />
 {@render children()}

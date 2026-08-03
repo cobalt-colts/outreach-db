@@ -1,3 +1,4 @@
+from pydantic import BaseModel
 from sqlalchemy import CheckConstraint, UniqueConstraint
 from sqlmodel import Field, SQLModel
 
@@ -62,3 +63,10 @@ class OutreachEventTag(SQLModel, table=True):
         index=True,
     )
     tag: str
+
+class OutreachEventAPI(BaseModel):
+    name: str
+    location: str
+    description: str
+    link: str
+    tags: list[str]

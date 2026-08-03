@@ -6,8 +6,13 @@ from sqlalchemy import event
 from sqlalchemy.engine import Engine
 from sqlmodel import Session, SQLModel, create_engine, select
 
-from app.models import CurrentUserResponse, OutreachEvent, User
-
+from app.models import (
+    CurrentUserResponse,
+    OutreachEvent,
+    OutreachEventAPI,
+    OutreachEventTag,
+    User,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DB_PATH = PROJECT_ROOT / "conf" / "db.sqlite"
@@ -59,6 +64,28 @@ def update_password_hash(session: Session, user: User, password_hash: str) -> No
     session.add(user)
     session.commit()
 
+def create_event(session: Session, event_api: OutreachEventAPI) -> OutreachEvent:
+    """Create an outreach event and its associated tags in one transaction."""
+    event = OutreachEvent(**event_api.model_dump(exclude={"tags"}))
+
+    try:
+        session.add(event)
+        session.flush()
+
+        if event.id is None:
+            raise RuntimeError("The created event did not receive an ID.")
+
+        session.add_all(
+            OutreachEventTag(event_id=event.id, tag=tag)
+            for tag in dict.fromkeys(event_api.tags)
+        )
+        session.commit()
+        session.refresh(event)
+    except Exception:
+        session.rollback()
+        raise
+
+    return event
 
 def get_events(session: Session) -> list[OutreachEvent]:
     return list(session.exec(select(OutreachEvent)).all())

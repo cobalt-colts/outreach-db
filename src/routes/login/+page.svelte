@@ -3,6 +3,7 @@
     import Button from "$lib/components/ui/button.svelte";
     import Card from "$lib/components/ui/card.svelte";
     import Input from "$lib/components/ui/input.svelte";
+    import { LoaderCircle } from "@lucide/svelte";
     import {onMount} from "svelte";
 
     let email = $state("");
@@ -40,7 +41,12 @@
             <Input bind:value={email} type="email" autocomplete="email" placeholder="Email" required />
             <Input bind:value={password} type="password" autocomplete="current-password" placeholder="Password" required />
             <Button type="submit" disabled={submitting}>
-                {submitting ? "Logging in…" : "Login"}
+                {#if submitting}
+                    <LoaderCircle class="animate-spin"/>
+                    Logging in
+                {:else}
+                    Login
+                {/if}
             </Button>
             {#if error}
                 <p role="alert">{error}</p>

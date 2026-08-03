@@ -3,18 +3,22 @@
     import {apiRequest} from "$lib/auth.svelte";
     import ErrorMessage from "$lib/components/ui/error.svelte";
     import Eventcard from "\$lib/components/blocks/eventcard.svelte";
-    import type { Event } from "$lib/components/events";
+    import type { OutreachEvent } from "$lib/events";
     import {onMount} from "svelte";
     import Input from "$lib/components/ui/input.svelte";
     import Button from "$lib/components/ui/button.svelte";
+    import { LoaderCircle } from "@lucide/svelte";
 
-    let events: Event[] | undefined = $state();
-
-    let error: string = $state("")
+    let events: OutreachEvent[] = $state([]);
+    let error: string | null = $state(null);
+    let loading = $state(true);
 
     let searchbox: string = $state("");
 
     async function getOutreachEvents(): Promise<void> {
+        loading = true;
+        error = null;
+
         try {
             const response = await apiRequest("/api/events/get", {
                 method: "GET",
@@ -24,15 +28,30 @@
             })
 
             if (!response.ok) {
-                const payload = await response.json().catch(() => null);
-                throw new Error(payload?.detail ?? response.statusText ?? "Unable to fetch events.");
+                const payload: unknown = await response.json().catch(() => null);
+                const detail =
+                    typeof payload === "object" && payload !== null && "detail" in payload
+                        ? payload.detail
+                        : null;
+                throw new Error(
+                    typeof detail === "string"
+                        ? detail
+                        : response.statusText || "Unable to fetch events."
+                );
             }
 
-            events = await response.json();
-            error = "";
+            const payload: unknown = await response.json();
+            if (!Array.isArray(payload)) {
+                throw new Error("The events service returned an invalid response.");
+            }
+
+            events = payload as OutreachEvent[];
         } catch (e) {
             console.error(e);
             error = e instanceof Error ? e.message : "Unable to fetch events.";
+            events = [];
+        } finally {
+            loading = false;
         }
     }
 
@@ -52,17 +71,19 @@
                 Filter
             </Button>
         </div>
-        {#if events}
+        {#if error}
+            <ErrorMessage content={error} />
+            <Button onclick={getOutreachEvents}>Try again</Button>
+        {:else if loading}
+            <LoaderCircle class="animate-spin" />
+        {:else if events.length > 0}
             <div class="mx-auto grid grid-cols-2 justify-items-center gap-4 gap-y-2">
                 {#each events as event}
                     <Eventcard event={event} />
                 {/each}
             </div>
-        {:else if error}
-            <ErrorMessage bind:content={error} />
         {:else}
-            <p class="animate-spin">fetching events</p>
+            <p>No outreach events are available.</p>
         {/if}
-
     </div>
 </main>

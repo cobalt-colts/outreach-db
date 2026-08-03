@@ -1,8 +1,8 @@
 <script lang="ts">
     import Card from "$lib/components/ui/card.svelte";
-    import type { Event } from "$lib/components/events";
+    import type { OutreachEvent } from "$lib/events";
 
-    let { event }: {event: Event} = $props();
+    let { event }: {event: OutreachEvent} = $props();
 </script>
 
 <Card class="min-w-0 hover:scale-[102%] hover:shadow-xl transition-all duration-100">

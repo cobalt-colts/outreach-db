@@ -5,6 +5,6 @@
     let { children, ...attributes }: HTMLButtonAttributes & { children?: Snippet } = $props();
 </script>
 
-<button {...attributes} class="{attributes.class} border-2 border-black p-2 active:translate-y-px transition-all duration-100 ease-out">
+<button {...attributes} class="{attributes.class} border-2 border-black p-2 active:translate-y-px transition-all duration-100 ease-out flex flex-row gap-2">
     {@render children?.()}
 </button>

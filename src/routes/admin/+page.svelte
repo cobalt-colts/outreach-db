@@ -2,6 +2,9 @@
     import {onMount} from "svelte";
     import {clearAuthToken, getAuthToken, getPermissionLevel} from "$lib/auth.svelte";
     import { goto } from "$app/navigation";
+    import Eventcreatedialog from "$lib/components/blocks/eventcreatedialog.svelte";
+    import Button from "$lib/components/ui/button.svelte";
+    import {toast} from "svelte-sonner";
 
     let authorized = $state(false);
 
@@ -26,7 +29,8 @@
 </script>
 
 {#if authorized}
-    <main class="flex justify-center text-center">
-        <h1>Welcome to admin!</h1>
-    </main>
+    <div class="m-3 flex w-auto flex-col items-start gap-3">
+        <Eventcreatedialog />
+        <Button onclick={() => toast("test!")}>Test toast</Button>
+    </div>
 {/if}
