@@ -3,6 +3,7 @@ node_modules
 # Python
 __pycache__/
 *.py[cod]
+.venv/
 
 # Local data
 conf/*.sqlite
@@ -33,6 +34,6 @@ Thumbs.db
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
+# IDE and Agent
 ./.vscode
-./.idea
 ./.codex
