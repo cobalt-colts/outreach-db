@@ -1,8 +1,7 @@
 <script lang="ts">
-    import Navbar from "$lib/components/blocks/navbar.svelte";
     import {apiRequest} from "$lib/auth.svelte";
     import ErrorMessage from "$lib/components/ui/error.svelte";
-    import Eventcard from "\$lib/components/blocks/eventcard.svelte";
+    import Eventcard from "$lib/components/blocks/eventcard.svelte";
     import type { OutreachEvent } from "$lib/events";
     import {onMount} from "svelte";
     import Input from "$lib/components/ui/input.svelte";
@@ -14,6 +13,8 @@
     let loading = $state(true);
 
     let searchbox: string = $state("");
+
+    let filteredEvents = $derived(events.filter(event => event.name.toLowerCase().includes(searchbox.toLowerCase())))
 
     async function getOutreachEvents(): Promise<void> {
         loading = true;
@@ -67,9 +68,6 @@
         </h1>
         <div class="flex flex-row gap-3 w-full min-w-0">
             <Input bind:value={searchbox} placeholder="Search events..."/>
-            <Button>
-                Filter
-            </Button>
         </div>
         {#if error}
             <ErrorMessage content={error} />
@@ -78,7 +76,7 @@
             <LoaderCircle class="animate-spin" />
         {:else if events.length > 0}
             <div class="mx-auto grid grid-cols-2 justify-items-center gap-4 gap-y-2">
-                {#each events as event}
+                {#each filteredEvents as event}
                     <Eventcard event={event} />
                 {/each}
             </div>
