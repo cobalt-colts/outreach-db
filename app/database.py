@@ -89,3 +89,7 @@ def create_event(session: Session, event_api: OutreachEventAPI) -> OutreachEvent
 
 def get_events(session: Session) -> list[OutreachEvent]:
     return list(session.exec(select(OutreachEvent)).all())
+
+def get_event(session: Session, event_id: int):
+    event = session.exec(select(OutreachEvent).where(OutreachEvent.id == event_id)).first()
+    return event

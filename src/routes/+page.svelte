@@ -75,7 +75,7 @@
         {:else if loading}
             <LoaderCircle class="animate-spin" />
         {:else if events.length > 0}
-            <div class="mx-auto grid grid-cols-2 justify-items-center gap-4 gap-y-2">
+            <div class="grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
                 {#each filteredEvents as event}
                     <Eventcard event={event} />
                 {/each}
