@@ -35,5 +35,5 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
 # IDE and Agent
-./.vscode
-./.codex
+.vscode/
+.codex/
