@@ -57,7 +57,7 @@ def main() -> None:
     parser.add_argument("--reload", action="store_true", help="Enable hot reload")
     args = parser.parse_args()
 
-    uvicorn.run("main:create_app", factory=True, reload=args.reload)
+    uvicorn.run("main:create_app", factory=True, reload=args.reload, host="0.0.0.0")
 
 
 if __name__ == "__main__":
