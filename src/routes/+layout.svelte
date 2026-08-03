@@ -35,7 +35,10 @@
     })
 </script>
 
-<svelte:head><link rel="icon" href={favicon} /></svelte:head>
+<svelte:head>
+    <link rel="icon" href={favicon} />
+    <title>Outreach DB</title>
+</svelte:head>
 <Toaster richColors/>
 <Navbar />
 {@render children()}
