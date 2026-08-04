@@ -54,9 +54,9 @@
                 return;
             }
             dialog?.close()
-            toast.success("Successfully created event!")
+            toast.success("Successfully created opportunity!")
         } catch (e) {
-            error = "Error creating event, please try again."
+            error = "Error creating opportunity, please try again."
             console.error(e)
         }
         submitting = false;
@@ -64,7 +64,7 @@
 </script>
 
 <Button onclick={() => dialog?.showModal()}>
-    <Plus /> Create Event
+    <Plus /> Create Opportunity
 </Button>
 
 <dialog
@@ -76,29 +76,29 @@
     <Card>
         <form class="flex w-full flex-col gap-4" onsubmit={createEvent}>
             <div class="flex w-full flex-row flex-1 min-w-0 justify-between">
-                <h1 class="font-bold text-xl">Create Event</h1>
+                <h1 class="font-bold text-xl">Create Opportunity</h1>
                 <button type="button" onclick={() => dialog?.close()} class="active:scale-95 transition-all duration-100">
                     <X class="self-center"/>
                 </button>
             </div>
-            <label for="name">Event Name:</label>
+            <label for="name">Opportunity Name:</label>
             <Input bind:value={event.name} id="name" required placeholder="Bee Emporium Volunteering" />
-            <label for="description">Event Description:</label>
+            <label for="description">Opportunity Description:</label>
             <Textarea bind:value={event.description} id="description" required placeholder="Volunteer at this fun local event!" />
-            <label for="location">Event Location:</label>
+            <label for="location">Opportunity Location:</label>
             <Input bind:value={event.location} id="location" required placeholder="Kansas City, MO"/>
-            <label for="link">Event Link:</label>
+            <label for="link">Opportunity Link:</label>
             <Input bind:value={event.link} id="link" required placeholder="https://beeemporium.org/volunteer"/>
-            <label for="tags">Event Tags (separated by commas):</label>
+            <label for="tags">Opportunity Tags (separated by commas):</label>
             <Input bind:value={tags} id="tags" placeholder="Bees,Volunteering,Fun"/>
             {#if error}
                 <ErrorMessage content={error} />
             {/if}
             <Button type="submit">
                 {#if submitting}
-                    <LoaderCircle class="animate-spin" /> Creating Event
+                    <LoaderCircle class="animate-spin" /> Creating Opportunity
                 {:else}
-                    Create Event
+                    Create Opportunity
                 {/if}
             </Button>
         </form>

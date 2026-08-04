@@ -33,7 +33,7 @@
 
           if (!response.ok) {
             console.error(response)
-            errmsg = "Error fetching event."
+            errmsg = "Error fetching opportunity."
             loading = false
             return;
           }
@@ -56,7 +56,7 @@
     </div>
 {:else if loading}
     <div class="mx-auto flex w-full max-w-xl justify-center px-5 py-12">
-        <p class="flex flex-row gap-2"><LoaderCircle class="animate-spin"/>Loading event</p>
+        <p class="flex flex-row gap-2"><LoaderCircle class="animate-spin"/>Loading opportunity</p>
     </div>
 {:else if event}
     <div class="mx-auto flex w-full max-w-3xl flex-col items-center gap-5 px-5 py-12 text-start sm:py-20">
@@ -78,6 +78,6 @@
     </div>
 {:else}
     <div class="mx-auto flex w-full max-w-xl justify-center px-5 py-12">
-        <ErrorMessage content="Event not found." />
+        <ErrorMessage content="Opportunity not found." />
     </div>
 {/if}

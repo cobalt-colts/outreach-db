@@ -2,7 +2,7 @@
     import type { Snippet } from "svelte";
     import type { HTMLButtonAttributes } from "svelte/elements";
 
-    let { children, variant = "default", ...attributes }: HTMLButtonAttributes & { children?: Snippet; variant: string } = $props();
+    let { children, variant = "default", ...attributes }: HTMLButtonAttributes & { children?: Snippet; variant?: string } = $props();
 </script>
 
 {#if variant === "default"}

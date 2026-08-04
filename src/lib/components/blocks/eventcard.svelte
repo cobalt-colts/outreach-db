@@ -7,7 +7,7 @@
 
 <Card class="min-w-0 hover:scale-[102%] hover:shadow-xl transition-all duration-100">
     <h2 class="text-xl font-bold">
-        <a class="hover:underline" href={`/events/${event.id}`}>{event.name}</a>
+        <a class="hover:underline" href={`/opportunities/${event.id}`}>{event.name}</a>
     </h2>
     <p class="min-w-0 wrap-break-word text-md text-neutral-700">
         {event.location} -

@@ -64,10 +64,10 @@
 <main>
     <div class="mx-auto my-5 flex max-w-xl flex-col items-center justify-center gap-5">
         <h1 class="mt-25 mb-25 text-center text-5xl font-bold">
-            Browse outreach events
+            Browse outreach opportunities
         </h1>
         <div class="flex flex-row gap-3 w-full min-w-0">
-            <Input bind:value={searchbox} placeholder="Search events..."/>
+            <Input bind:value={searchbox} placeholder="Search opportunities..."/>
         </div>
         {#if error}
             <ErrorMessage content={error} />
@@ -81,7 +81,7 @@
                 {/each}
             </div>
         {:else}
-            <p>No outreach events are available.</p>
+            <p>No outreach opportunities are available.</p>
         {/if}
     </div>
 </main>
