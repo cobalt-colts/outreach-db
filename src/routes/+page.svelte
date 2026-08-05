@@ -14,7 +14,14 @@
 
     let searchbox: string = $state("");
 
-    let filteredEvents = $derived(events.filter(event => event.name.toLowerCase().includes(searchbox.toLowerCase())))
+    let filteredEvents = $derived(events.filter(event => {
+      const search = searchbox.toLowerCase();
+      return [
+        event.name,
+        event.description,
+        event.location
+        ].some(term => term.toLowerCase().includes(search))
+    }))
 
     async function getOutreachEvents(): Promise<void> {
         loading = true;
