@@ -31,9 +31,9 @@ def main() -> None:
 
     is_admin = input("Is admin (y/n): ").strip().lower()
     if is_admin == "y":
-        permission_level = 0
-    elif is_admin == "n":
         permission_level = 1
+    elif is_admin == "n":
+        permission_level = 0
     else:
         print("Please enter y or n")
         return
