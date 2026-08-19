@@ -1,72 +1,29 @@
 <script lang="ts">
-    import {apiRequest} from "$lib/auth.svelte";
-    import ErrorMessage from "$lib/components/ui/error.svelte";
     import Eventcard from "$lib/components/blocks/eventcard.svelte";
-    import type { OutreachEvent } from "$lib/events";
-    import {onMount} from "svelte";
+    import { formatLocation, type OutreachEvent } from "$lib/events";
     import Input from "$lib/components/ui/input.svelte";
-    import Button from "$lib/components/ui/button.svelte";
-    import { LoaderCircle } from "@lucide/svelte";
+    import Seo from "$lib/components/ui/seo.svelte";
 
-    let events: OutreachEvent[] = $state([]);
-    let error: string | null = $state(null);
-    let loading = $state(true);
+    let { data }: { data: { events: OutreachEvent[] } } = $props();
 
     let searchbox: string = $state("");
 
-    let filteredEvents = $derived(events.filter(event => {
+    let searchedEvents = $derived(data.events.filter(event => {
       const search = searchbox.toLowerCase();
       return [
         event.name,
         event.description,
-        event.location
+        formatLocation(event),
+        event.zip_code,
+        ...event.tags
         ].some(term => term.toLowerCase().includes(search))
     }))
 
-    async function getOutreachEvents(): Promise<void> {
-        loading = true;
-        error = null;
+    let filteredEvents = $derived(searchedEvents.filter(event => !event.tags.some(tag => tag === "Cooperative Extension")));
 
-        try {
-            const response = await apiRequest("/api/events/get", {
-                method: "GET",
-                headers: {
-                    Accept: "application/json",
-                }
-            })
-
-            if (!response.ok) {
-                const payload: unknown = await response.json().catch(() => null);
-                const detail =
-                    typeof payload === "object" && payload !== null && "detail" in payload
-                        ? payload.detail
-                        : null;
-                throw new Error(
-                    typeof detail === "string"
-                        ? detail
-                        : response.statusText || "Unable to fetch events."
-                );
-            }
-
-            const payload: unknown = await response.json();
-            if (!Array.isArray(payload)) {
-                throw new Error("The events service returned an invalid response.");
-            }
-
-            events = payload as OutreachEvent[];
-        } catch (e) {
-            console.error(e);
-            error = e instanceof Error ? e.message : "Unable to fetch events.";
-            events = [];
-        } finally {
-            loading = false;
-        }
-    }
-
-    onMount(() => {
-        getOutreachEvents();
-    })
 </script>
+
+<Seo title="Outreach Opportunities" description="Browse community outreach opportunities." />
 
 <main>
     <div class="mx-auto my-5 flex max-w-xl flex-col items-center justify-center gap-5">
@@ -76,12 +33,7 @@
         <div class="flex flex-row gap-3 w-full min-w-0">
             <Input bind:value={searchbox} placeholder="Search opportunities..."/>
         </div>
-        {#if error}
-            <ErrorMessage content={error} />
-            <Button onclick={getOutreachEvents}>Try again</Button>
-        {:else if loading}
-            <LoaderCircle class="animate-spin" />
-        {:else if filteredEvents.length > 0}
+        {#if filteredEvents.length > 0}
             <div class="grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
                 {#each filteredEvents as event}
                     <Eventcard event={event} />

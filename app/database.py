@@ -4,13 +4,14 @@ from typing import Any
 
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
-from sqlmodel import Session, SQLModel, create_engine, select
+from sqlmodel import Session, SQLModel, col, create_engine, select
 
 from app.models import (
     CurrentUserResponse,
-    OutreachEvent,
-    OutreachEventAPI,
-    OutreachEventTag,
+    Organization,
+    OrganizationAPI,
+    OrganizationRead,
+    OrganizationTag,
     User,
 )
 
@@ -64,19 +65,19 @@ def update_password_hash(session: Session, user: User, password_hash: str) -> No
     session.add(user)
     session.commit()
 
-def create_event(session: Session, event_api: OutreachEventAPI) -> OutreachEvent:
-    """Create an outreach event and its associated tags in one transaction."""
-    event = OutreachEvent(**event_api.model_dump(exclude={"tags"}))
+def create_event(session: Session, event_api: OrganizationAPI) -> Organization:
+    """Create an organization and its associated tags in one transaction."""
+    event = Organization(**event_api.model_dump(exclude={"tags"}))
 
     try:
         session.add(event)
         session.flush()
 
         if event.id is None:
-            raise RuntimeError("The created event did not receive an ID.")
+            raise RuntimeError("The created organization did not receive an ID.")
 
         session.add_all(
-            OutreachEventTag(event_id=event.id, tag=tag)
+            OrganizationTag(organization_id=event.id, tag=tag)
             for tag in dict.fromkeys(event_api.tags)
         )
         session.commit()
@@ -87,9 +88,45 @@ def create_event(session: Session, event_api: OutreachEventAPI) -> OutreachEvent
 
     return event
 
-def get_events(session: Session) -> list[OutreachEvent]:
-    return list(session.exec(select(OutreachEvent)).all())
+def _tags_by_organization(
+    session: Session, organization_ids: list[int]
+) -> dict[int, list[str]]:
+    """Fetch tags for many organizations in one query, keyed by organization id."""
+    if not organization_ids:
+        return {}
 
-def get_event(session: Session, event_id: int):
-    event = session.exec(select(OutreachEvent).where(OutreachEvent.id == event_id)).first()
-    return event
+    rows = session.exec(
+        select(OrganizationTag.organization_id, OrganizationTag.tag).where(
+            col(OrganizationTag.organization_id).in_(organization_ids)
+        )
+    ).all()
+
+    tags: dict[int, list[str]] = {oid: [] for oid in organization_ids}
+    for organization_id, tag in rows:
+        tags[organization_id].append(tag)
+    return tags
+
+
+def _to_read_model(organization: Organization, tags: list[str]) -> OrganizationRead:
+    return OrganizationRead(
+        **organization.model_dump(exclude={"verified_by", "verified_at"}), tags=tags
+    )
+
+
+def get_events(session: Session) -> list[OrganizationRead]:
+    organizations = list(session.exec(select(Organization)).all())
+    tags = _tags_by_organization(
+        session, [o.id for o in organizations if o.id is not None]
+    )
+    return [_to_read_model(o, tags.get(o.id or -1, [])) for o in organizations]
+
+
+def get_event(session: Session, event_id: int) -> OrganizationRead | None:
+    organization = session.exec(
+        select(Organization).where(Organization.id == event_id)
+    ).first()
+    if organization is None or organization.id is None:
+        return None
+
+    tags = _tags_by_organization(session, [organization.id])
+    return _to_read_model(organization, tags[organization.id])

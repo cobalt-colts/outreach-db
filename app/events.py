@@ -6,7 +6,7 @@ from sqlmodel import Session, SQLModel
 
 from app.auth import get_auth_payload
 from app.database import get_events, get_session, create_event, get_event
-from app.models import OutreachEventAPI
+from app.models import OrganizationAPI
 
 events = APIRouter(prefix="/events", tags=["events"])
 
@@ -34,7 +34,7 @@ async def _api_events_get_id(
 
 @events.post("/create")
 async def _api_events_create(
-        body: OutreachEventAPI,
+        body: OrganizationAPI,
         session: Session = Depends(get_session),
         payload: dict[str, Any] = Depends(get_auth_payload)
 ):
