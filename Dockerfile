@@ -46,6 +46,7 @@ COPY --from=frontend-builder /app/build ./build
 COPY app ./app
 COPY main.py ./main.py
 COPY docker/serve.py ./docker/serve.py
+COPY tools ./tools
 
 RUN groupadd --system outreach \
     && useradd --system --gid outreach --home-dir /app outreach \
