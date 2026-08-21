@@ -2,6 +2,7 @@
     import { Check, Copy, Link, MapPin } from '@lucide/svelte';
     import { formatLocation, type OutreachEvent } from '$lib/events';
     import Button from '$lib/components/ui/button.svelte';
+    import SmallMap from '$lib/components/ui/smallmap.svelte';
 
     let { data }: { data: { event: OutreachEvent } } = $props();
     let copied : boolean = $state(false)
@@ -44,4 +45,5 @@
                 {/each}
             </ul>
         {/if}
+        <SmallMap event={data.event} />
 </div>

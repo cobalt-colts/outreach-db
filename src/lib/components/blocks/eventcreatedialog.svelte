@@ -76,14 +76,14 @@
     aria-label="Create event"
     class="fixed inset-0 m-0 h-dvh w-dvw max-h-none max-w-none place-items-center overflow-visible border-0 bg-transparent p-0 backdrop:bg-black/20 backdrop:backdrop-blur-xs open:grid open:animate-fade-in"
 >
-    <Card>
-        <form class="flex w-full flex-col gap-4" onsubmit={createEvent}>
-            <div class="flex w-full flex-row flex-1 min-w-0 justify-between">
-                <h1 class="font-bold text-xl">Create Opportunity</h1>
-                <button type="button" onclick={() => dialog?.close()} class="active:scale-95 transition-all duration-100">
-                    <X class="self-center"/>
-                </button>
-            </div>
+    <Card class="max-h-[80dvh] overflow-hidden">
+        <div class="flex w-full shrink-0 flex-row items-center justify-between">
+            <h1 class="font-bold text-xl">Create Opportunity</h1>
+            <button type="button" onclick={() => dialog?.close()} class="active:scale-95 transition-all duration-100">
+                <X class="self-center"/>
+            </button>
+        </div>
+        <form class="flex min-h-0 w-full flex-1 flex-col gap-4 overflow-y-auto pr-1" onsubmit={createEvent}>
             <label for="name">Opportunity Name:</label>
             <Input bind:value={event.name} id="name" required placeholder="Bee Emporium Volunteering" />
             <label for="description">Opportunity Description:</label>

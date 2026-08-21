@@ -12,6 +12,11 @@ export interface OutreachEvent {
 	tags: string[];
 }
 
+/** Cooperative Extension records are intentionally excluded from public discovery views. */
+export function isCooperativeExtension(event: Pick<OutreachEvent, 'tags'>): boolean {
+	return event.tags.some((tag) => tag.trim().toLocaleLowerCase() === 'cooperative extension');
+}
+
 /** "Springfield, IL" — the display form of the split city/state columns. */
 export function formatLocation(event: Pick<OutreachEvent, 'city' | 'state'>): string {
 	return `${event.city}, ${event.state}`;

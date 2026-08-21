@@ -1,6 +1,6 @@
 <script lang="ts">
     import Eventcard from "$lib/components/blocks/eventcard.svelte";
-    import { formatLocation, type OutreachEvent } from "$lib/events";
+    import { formatLocation, isCooperativeExtension, type OutreachEvent } from "$lib/events";
     import Input from "$lib/components/ui/input.svelte";
     import Seo from "$lib/components/ui/seo.svelte";
 
@@ -19,7 +19,7 @@
         ].some(term => term.toLowerCase().includes(search))
     }))
 
-    let filteredEvents = $derived(searchedEvents.filter(event => !event.tags.some(tag => tag === "Cooperative Extension")));
+    let filteredEvents = $derived(searchedEvents.filter(event => !isCooperativeExtension(event)));
 
 </script>
 
