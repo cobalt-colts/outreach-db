@@ -1,0 +1,20 @@
+.git
+.github
+.codex
+.idea
+.vscode
+
+.env
+.env.*
+
+.svelte-kit
+.venv
+build
+node_modules
+package-lock.json
+
+__pycache__
+*.py[cod]
+
+# Runtime data belongs in the persistent Compose volume, not in the image.
+conf/*
