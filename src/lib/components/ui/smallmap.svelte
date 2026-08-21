@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { Map } from 'leaflet';
-    import { getCoordinatesFromZip } from '$lib/map.svelte';
+    import { configureLeafletDefaultIcons, getCoordinatesFromZip } from '$lib/map.svelte';
     import type { OutreachEvent } from '$lib/events';
 
 	let mapElement: HTMLDivElement;
@@ -17,6 +17,7 @@
 			await import('leaflet/dist/leaflet.css');
 
 			if (destroyed) return;
+			configureLeafletDefaultIcons(L);
 
 			map = L.map(mapElement).setView([39.0997, -94.5786], 10);
 

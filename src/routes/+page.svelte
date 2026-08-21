@@ -39,8 +39,10 @@
                     <Eventcard event={event} />
                 {/each}
             </div>
-        {:else}
+        {:else if searchbox}
             <p>No outreach opportunities are available that match your search criteria.</p>
+        {:else}
+            <p>No outreach opportunities are available at this time. Please check back again in the future.</p>
         {/if}
     </div>
 </main>

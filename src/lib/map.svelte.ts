@@ -1,4 +1,7 @@
 import type { OutreachEvent } from '$lib/events';
+import markerIconUrl from 'leaflet/dist/images/marker-icon.png?url';
+import markerIconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png?url';
+import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png?url';
 
 type ZipCodeLookup = typeof import('zipcodes')['lookup'];
 
@@ -6,6 +9,15 @@ export type MapCoordinates = {
 	lat: number;
 	lng: number;
 };
+
+/** Configure Leaflet's default marker to use URLs emitted by the app build. */
+export function configureLeafletDefaultIcons(L: typeof import('leaflet')): void {
+	L.Icon.Default.mergeOptions({
+		iconUrl: markerIconUrl,
+		iconRetinaUrl: markerIconRetinaUrl,
+		shadowUrl: markerShadowUrl
+	});
+}
 
 /** A ZIP-centroid location and every opportunity assigned to that ZIP. */
 export type GeocodedEventGroup = {
