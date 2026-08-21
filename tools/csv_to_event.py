@@ -19,7 +19,15 @@ from pathlib import Path
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from app.database import create_db_engine, init_db
+
+
 DEFAULT_DB_PATH = PROJECT_ROOT / "conf" / "db.sqlite"
+DEFAULT_CSV_PATH = Path(__file__).resolve().with_name(
+    "Outreach DB - v5 - All Cities.csv"
+)
 
 EXPECTED_COLUMNS = [
     "Organization",
@@ -91,6 +99,7 @@ def parse_row(row: dict[str, str], line: int) -> tuple[dict[str, str | None], li
         "link": link,
         "audit_status": audit_status,
         "audit_notes": audit_notes,
+        "status": "active",
     }
 
     # dict.fromkeys de-duplicates while preserving the CSV's tag order.
@@ -110,14 +119,25 @@ def read_csv(csv_file: Path) -> list[tuple[dict[str, str | None], list[str]]]:
 
 
 def import_events(csv_file: Path, db_path: Path = DEFAULT_DB_PATH) -> tuple[int, int]:
-    """Import organizations and tags idempotently. Returns (organizations, tags)."""
+    """Initialize the current schema, then import organizations and tags."""
+    csv_file = csv_file.expanduser().resolve()
+    db_path = db_path.expanduser().resolve()
     parsed = read_csv(csv_file)
+
+    # Keep clean-database behavior consistent with application startup. SQLModel's
+    # current table definitions are the source of truth; no manual pre-migration
+    # step is required before running this importer.
+    db_engine = create_db_engine(db_path)
+    try:
+        init_db(db_engine)
+    finally:
+        db_engine.dispose()
 
     insert_organization = """
         INSERT INTO organizations
-            (name, city, state, zip_code, description, link, audit_status, audit_notes)
+            (name, city, state, zip_code, description, link, audit_status, audit_notes, status)
         VALUES
-            (:name, :city, :state, :zip_code, :description, :link, :audit_status, :audit_notes)
+            (:name, :city, :state, :zip_code, :description, :link, :audit_status, :audit_notes, :status)
         ON CONFLICT(name, city, state) DO UPDATE SET
             zip_code = excluded.zip_code,
             description = excluded.description,
@@ -145,6 +165,11 @@ def import_events(csv_file: Path, db_path: Path = DEFAULT_DB_PATH) -> tuple[int,
                     f"Could not find the imported organization {organization['name']!r}"
                 )
 
+            # The CSV's tags replace the existing set so reruns do not retain tags
+            # that were removed from the source export.
+            cursor.execute(
+                "DELETE FROM organization_tags WHERE organization_id = ?", (row[0],)
+            )
             cursor.executemany(
                 """
                 INSERT INTO organization_tags (organization_id, tag)
@@ -163,7 +188,13 @@ def main() -> None:
         prog="csv_to_event",
         description="Import an Outreach DB CSV export into the sqlite3 database.",
     )
-    parser.add_argument("csv_file", type=Path)
+    parser.add_argument(
+        "csv_file",
+        type=Path,
+        nargs="?",
+        default=DEFAULT_CSV_PATH,
+        help=f"CSV export to import (default: {DEFAULT_CSV_PATH})",
+    )
     parser.add_argument("--db", type=Path, default=DEFAULT_DB_PATH)
     args = parser.parse_args()
 

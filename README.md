@@ -48,3 +48,9 @@ the automatically generated JWT keypair are stored in the named
 `outreach-data` volume and survive container replacement. `docker compose down`
 keeps this volume; use `docker compose down --volumes` only when you intend to
 delete the application data.
+
+To initialize or refresh the database from the CSV bundled in `tools/`, run:
+
+```sh
+docker compose exec outreach-db python tools/csv_to_event.py
+```
