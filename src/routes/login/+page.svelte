@@ -49,7 +49,7 @@
                 {/if}
             </Button>
             {#if error}
-                <p role="alert">{error}</p>
+                <p role="alert" class="text-red-500">{error}</p>
             {/if}
         </form>
     </Card>

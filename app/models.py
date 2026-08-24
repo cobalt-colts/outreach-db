@@ -1,6 +1,7 @@
 from pydantic import BaseModel
+from pydantic import Field as APIField
 from sqlalchemy import CheckConstraint, UniqueConstraint
-from sqlmodel import Field, SQLModel, Relationship
+from sqlmodel import Field, SQLModel
 
 
 class LoginModel(SQLModel):
@@ -37,45 +38,84 @@ class User(SQLModel, table=True):
     team_number: int
 
 
-class OutreachEvent(SQLModel, table=True):
-    __tablename__ = "outreach_events"
+class Organization(SQLModel, table=True):
+    __tablename__ = "organizations"
     __table_args__ = (
-        UniqueConstraint(
-            "name", "location", "description", "link", name="unique_event"
+        UniqueConstraint("name", "city", "state", name="unique_organization"),
+        CheckConstraint(
+            "status IN ('active', 'archived', 'flagged')",
+            name="organizations_status_check",
+        ),
+        CheckConstraint(
+            "audit_status IN ('checked', 'corrected')",
+            name="organizations_audit_status_check",
+        ),
+        CheckConstraint(
+            "audit_status <> 'corrected' OR audit_notes IS NOT NULL",
+            name="audit_notes_required_when_corrected",
+        ),
+        CheckConstraint(
+            "length(state) = 2 AND state = upper(state)",
+            name="organizations_state_check",
+        ),
+        CheckConstraint(
+            "zip_code GLOB '[0-9][0-9][0-9][0-9][0-9]'",
+            name="organizations_zip_code_check",
         ),
     )
 
     id: int | None = Field(default=None, primary_key=True)
     name: str
-    location: str
+    city: str = Field(index=True)
+    state: str = Field(index=True, min_length=2, max_length=2)
+    # TEXT, never an int: 145 CSV rows have a leading-zero ZIP ("04330").
+    zip_code: str = Field(min_length=5, max_length=5)
     description: str
     link: str
+    audit_status: str = Field(default="checked")
+    audit_notes: str | None = None
+    verified_by: str | None = None
+    verified_at: str | None = None
+    status: str = Field(default="active")
 
 
-class OutreachEventTag(SQLModel, table=True):
-    __tablename__ = "outreach_event_tags"
-    __table_args__ = (UniqueConstraint("event_id", "tag", name="unique_event_tags"),)
+class OrganizationTag(SQLModel, table=True):
+    __tablename__ = "organization_tags"
+    __table_args__ = (
+        UniqueConstraint("organization_id", "tag", name="unique_organization_tags"),
+    )
 
     id: int | None = Field(default=None, primary_key=True)
-    event_id: int = Field(
-        foreign_key="outreach_events.id",
+    organization_id: int = Field(
+        foreign_key="organizations.id",
         ondelete="CASCADE",
         index=True,
     )
     tag: str
 
-class OutreachEventAPI(BaseModel):
-    name: str
-    location: str
-    description: str
-    link: str
-    tags: list[str]
+class OrganizationAPI(BaseModel):
+    """Request body for creating an organization; mirrors the v5 CSV columns."""
+
+    name: str = APIField(min_length=1)
+    city: str = APIField(min_length=1)
+    state: str = APIField(pattern=r"^[A-Z]{2}$")
+    zip_code: str = APIField(pattern=r"^[0-9]{5}$")
+    description: str = APIField(min_length=1)
+    link: str = APIField(min_length=1)
+    tags: list[str] = []
 
 
-class OutreachEventResponse(BaseModel):
+class OrganizationRead(BaseModel):
+    """Response shape for organization reads, with tags folded in."""
+
     id: int
     name: str
-    location: str
+    city: str
+    state: str
+    zip_code: str
     description: str
     link: str
+    audit_status: str
+    audit_notes: str | None
+    status: str
     tags: list[str]

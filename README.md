@@ -1,42 +1,56 @@
-# sv
+# Outreach DB
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Outreach DB uses a SvelteKit Node server for the web application and FastAPI for
+the API. The SvelteKit server renders public pages on the server, so opportunity
+pages have useful HTML for crawlers and link previews before JavaScript loads.
 
-## Creating a project
+## Development
 
-If you're seeing this, you've probably already done this step. Congrats!
-
-```sh
-# create a new project
-npx sv create my-app
-```
-
-To recreate this project with the same configuration:
+Install the JavaScript and Python dependencies, then start both development
+servers:
 
 ```sh
-# recreate this project
-bun x sv@0.16.3 create --template minimal --types ts --add tailwindcss="plugins:none" sveltekit-adapter="adapter:static" --install bun .
+bun install
+uv sync
+bun run dev
 ```
 
-## Developing
+Vite serves the frontend and proxies `/api` requests to FastAPI on port 8000.
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+## Production
+
+Build the frontend and run FastAPI alongside the SvelteKit server:
 
 ```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+bun run build
+uv run main.py
+API_ORIGIN=http://127.0.0.1:8000 bun run start
 ```
 
-## Building
+Expose the SvelteKit server (port 3000 by default) publicly. It proxies `/api`
+requests to `API_ORIGIN`; FastAPI should remain private to the application
+network. Set `HOST` and `PORT` if the frontend must listen on different values.
 
-To create a production version of your app:
+## Docker Compose
+
+Build and start the complete application with:
 
 ```sh
-npm run build
+docker compose up --build -d
 ```
 
-You can preview the production build with `npm run preview`.
+Open `http://localhost:3000`. Set `APP_PORT` to publish a different host port,
+for example `APP_PORT=8080 docker compose up --build -d`.
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+The container runs both the SvelteKit Node server and FastAPI. Only SvelteKit is
+published; it proxies `/api` to FastAPI inside the container. SQLite data and
+the automatically generated JWT keypair are stored in the named
+`outreach-data` volume and survive container replacement. `docker compose down`
+keeps this volume; use `docker compose down --volumes` only when you intend to
+delete the application data.
+
+To initialize or refresh the database from the CSV bundled in `tools/`, run:
+
+```sh
+docker compose exec outreach-db python tools/csv_to_event.py
+```

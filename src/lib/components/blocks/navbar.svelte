@@ -19,7 +19,8 @@
 <div class="w-full flex flex-row flex-1 min-w-0 h-auto mb-2 border-b border-black p-5 justify-between">
     <div class="flex flex-row items-start justify-start gap-5 align-middle">
         <a href="/" class="font-bold text-xl">Outreach DB</a>
-        {#if me?.permission_level === 1}
+        <a class="self-center text-md" href="/map">Map</a>
+        {#if me?.permission_level === 0}
             <a class="self-center text-md" href="/admin">Admin</a>
         {/if}
     </div>

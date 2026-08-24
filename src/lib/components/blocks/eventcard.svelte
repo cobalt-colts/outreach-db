@@ -1,6 +1,6 @@
 <script lang="ts">
     import Card from "$lib/components/ui/card.svelte";
-    import type { OutreachEvent } from "$lib/events";
+    import { formatLocation, type OutreachEvent } from "$lib/events";
 
     let { event }: {event: OutreachEvent} = $props();
 </script>
@@ -10,7 +10,7 @@
         <a class="hover:underline" href={`/opportunities/${event.id}`}>{event.name}</a>
     </h2>
     <p class="min-w-0 wrap-break-word text-md text-neutral-700">
-        {event.location} -
+        {formatLocation(event)} -
         <a class="break-all hover:underline" href={event.link} target="_blank" rel="noreferrer">
             {event.link}
         </a>

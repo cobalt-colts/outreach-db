@@ -6,7 +6,7 @@
 </script>
 
 {#if variant === "default"}
-    <button {...attributes} class="{attributes.class} border-2 border-blue p-2 active:translate-y-px transition-all duration-100 ease-out flex flex-row gap-2">
+    <button {...attributes} class="{attributes.class} border-2 border-blue p-2 active:translate-y-px transition-all duration-100 ease-out flex flex-row gap-2 bg-black text-white">
         {@render children?.()}
     </button>
 {:else if variant === "ghost"}

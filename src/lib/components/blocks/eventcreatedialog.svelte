@@ -6,7 +6,6 @@
     import Input from "../ui/input.svelte";
     import ErrorMessage from "../ui/error.svelte";
 
-    import type { OutreachEvent } from "$lib/events";
     import Textarea from "../ui/textarea.svelte";
     import {apiRequest} from "$lib/auth.svelte";
     import {toast} from "svelte-sonner";
@@ -17,12 +16,15 @@
 
     let submitting: boolean = $state(false)
 
-    let event = $state<Omit<OutreachEvent, "id">>({
+    // Mirrors the POST /api/events/create body, not the full read model.
+    let event = $state({
         name: "",
-        location: "",
+        city: "",
+        state: "",
+        zip_code: "",
         description: "",
         link: "",
-        tags: [""]
+        tags: [] as string[]
     })
 
     let tags = $state("")
@@ -35,7 +37,8 @@
 
     async function createEvent(): Promise<void> {
         submitting = true;
-        event.tags = tags.split(',')
+        event.tags = tags.split(',').map(tag => tag.trim()).filter(Boolean)
+        event.state = event.state.trim().toUpperCase()
         try {
             const response = await apiRequest("/api/events/create", {
                 method: "POST",
@@ -73,20 +76,24 @@
     aria-label="Create event"
     class="fixed inset-0 m-0 h-dvh w-dvw max-h-none max-w-none place-items-center overflow-visible border-0 bg-transparent p-0 backdrop:bg-black/20 backdrop:backdrop-blur-xs open:grid open:animate-fade-in"
 >
-    <Card>
-        <form class="flex w-full flex-col gap-4" onsubmit={createEvent}>
-            <div class="flex w-full flex-row flex-1 min-w-0 justify-between">
-                <h1 class="font-bold text-xl">Create Opportunity</h1>
-                <button type="button" onclick={() => dialog?.close()} class="active:scale-95 transition-all duration-100">
-                    <X class="self-center"/>
-                </button>
-            </div>
+    <Card class="max-h-[80dvh] overflow-hidden">
+        <div class="flex w-full shrink-0 flex-row items-center justify-between">
+            <h1 class="font-bold text-xl">Create Opportunity</h1>
+            <button type="button" onclick={() => dialog?.close()} class="active:scale-95 transition-all duration-100">
+                <X class="self-center"/>
+            </button>
+        </div>
+        <form class="flex min-h-0 w-full flex-1 flex-col gap-4 overflow-y-auto pr-1" onsubmit={createEvent}>
             <label for="name">Opportunity Name:</label>
             <Input bind:value={event.name} id="name" required placeholder="Bee Emporium Volunteering" />
             <label for="description">Opportunity Description:</label>
             <Textarea bind:value={event.description} id="description" required placeholder="Volunteer at this fun local event!" />
-            <label for="location">Opportunity Location:</label>
-            <Input bind:value={event.location} id="location" required placeholder="Kansas City, MO"/>
+            <label for="city">Opportunity City:</label>
+            <Input bind:value={event.city} id="city" required placeholder="Kansas City"/>
+            <label for="state">Opportunity State (two letters):</label>
+            <Input bind:value={event.state} id="state" required placeholder="MO"/>
+            <label for="zip_code">Opportunity ZIP Code:</label>
+            <Input bind:value={event.zip_code} id="zip_code" required placeholder="64111"/>
             <label for="link">Opportunity Link:</label>
             <Input bind:value={event.link} id="link" required placeholder="https://beeemporium.org/volunteer"/>
             <label for="tags">Opportunity Tags (separated by commas):</label>

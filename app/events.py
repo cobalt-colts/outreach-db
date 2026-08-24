@@ -6,19 +6,19 @@ from sqlmodel import Session, SQLModel
 
 from app.auth import get_auth_payload
 from app.database import get_events, get_session, create_event, get_event
-from app.models import OutreachEventAPI, OutreachEventResponse
+from app.models import OrganizationAPI
 
 events = APIRouter(prefix="/events", tags=["events"])
 
 @events.get("/get")
-async def _api_events_get(session: Session = Depends(get_session)) -> list[OutreachEventResponse]:
+async def _api_events_get(session: Session = Depends(get_session)):
     return get_events(session=session)
 
 @events.get("/get/{event_id}")
 async def _api_events_get_id(
     event_id: int,
     session: Session = Depends(get_session)
-) -> OutreachEventResponse:
+):
     try:
         event = get_event(session, event_id)
     except SQLAlchemyError as e:
@@ -34,7 +34,7 @@ async def _api_events_get_id(
 
 @events.post("/create")
 async def _api_events_create(
-        body: OutreachEventAPI,
+        body: OrganizationAPI,
         session: Session = Depends(get_session),
         payload: dict[str, Any] = Depends(get_auth_payload)
 ):
