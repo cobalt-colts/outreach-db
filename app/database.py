@@ -10,6 +10,7 @@ from app.models import (
     CurrentUserResponse,
     OutreachEvent,
     OutreachEventAPI,
+    OutreachEventResponse,
     OutreachEventTag,
     User,
 )
@@ -87,9 +88,45 @@ def create_event(session: Session, event_api: OutreachEventAPI) -> OutreachEvent
 
     return event
 
-def get_events(session: Session) -> list[OutreachEvent]:
-    return list(session.exec(select(OutreachEvent)).all())
+def get_events(session: Session) -> list[OutreachEventResponse]:
+    """Fetch all events with their associated tags."""
+    events = session.exec(select(OutreachEvent)).all()
+    result = []
+    
+    for event in events:
+        tags_rows = session.exec(
+            select(OutreachEventTag).where(OutreachEventTag.event_id == event.id)
+        ).all()
+        tags = [tag.tag for tag in tags_rows]
+        
+        result.append(OutreachEventResponse(
+            id=event.id or 0,
+            name=event.name,
+            location=event.location,
+            description=event.description,
+            link=event.link,
+            tags=tags
+        ))
+    
+    return result
 
-def get_event(session: Session, event_id: int):
+def get_event(session: Session, event_id: int) -> OutreachEventResponse | None:
+    """Fetch a single event with its associated tags."""
     event = session.exec(select(OutreachEvent).where(OutreachEvent.id == event_id)).first()
-    return event
+    
+    if event is None:
+        return None
+    
+    tags_rows = session.exec(
+        select(OutreachEventTag).where(OutreachEventTag.event_id == event.id)
+    ).all()
+    tags = [tag.tag for tag in tags_rows]
+    
+    return OutreachEventResponse(
+        id=event.id or 0,
+        name=event.name,
+        location=event.location,
+        description=event.description,
+        link=event.link,
+        tags=tags
+    )
