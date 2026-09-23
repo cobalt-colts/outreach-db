@@ -36,7 +36,10 @@ network. Set `HOST` and `PORT` if the frontend must listen on different values.
 
 ## Docker Compose
 
-Build and start the complete application with:
+Every push to `main` builds and pushes an image to
+`ghcr.io/cobalt-colts/outreach-db:latest` via `.github/workflows/docker-image.yml`.
+
+For local development, build and start the complete application with:
 
 ```sh
 docker compose up --build -d
@@ -44,6 +47,23 @@ docker compose up --build -d
 
 Open `http://localhost:3000`. Set `APP_PORT` to publish a different host port,
 for example `APP_PORT=8080 docker compose up --build -d`.
+
+On a deployment host that only has `compose.yaml` (no source checkout, no
+`Dockerfile`), pull the CI-built image instead of building:
+
+```sh
+docker compose pull
+docker compose up -d
+```
+
+The GHCR package defaults to private. Either make it public under the repo's
+Packages settings, or authenticate the host first:
+
+```sh
+echo "$GITHUB_TOKEN" | docker login ghcr.io -u <github-username> --password-stdin
+```
+
+The token needs `read:packages` scope.
 
 The container runs both the SvelteKit Node server and FastAPI. Only SvelteKit is
 published; it proxies `/api` to FastAPI inside the container. SQLite data and

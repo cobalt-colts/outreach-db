@@ -39,7 +39,7 @@ async def _api_events_create(
         payload: dict[str, Any] = Depends(get_auth_payload)
 ):
     perms = payload.get('permissions')
-    if perms != 1:
+    if perms != 0:
         raise HTTPException(status_code=403, detail="Unauthorized to create events.")
 
     if not body.link.startswith(("https://", "http://")):

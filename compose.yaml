@@ -2,7 +2,7 @@ services:
   outreach-db:
     build:
       context: .
-    image: outreach-db:latest
+    image: ghcr.io/cobalt-colts/outreach-db:latest
     init: true
     restart: unless-stopped
     ports:
