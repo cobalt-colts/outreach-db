@@ -16,5 +16,22 @@ services:
     volumes:
       - outreach-data:/app/conf
 
+  caddy:
+    image: caddy:2-alpine
+    init: true
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./data/db/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - outreach-db
+
 volumes:
   outreach-data:
+  caddy-data:
+  caddy-config:

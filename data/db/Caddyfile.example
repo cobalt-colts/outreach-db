@@ -1,0 +1,27 @@
+# Copy this file to Caddyfile (same directory) and fill in your domain.
+#   cp data/db/Caddyfile.example data/db/Caddyfile
+#
+# Caddy handles ACME (Let's Encrypt) certificate issuance/renewal automatically
+# for any domain, as long as DNS for it points at this host and ports 80/443
+# are reachable from the internet.
+
+{
+	# Uncomment to receive certificate expiry notices from Let's Encrypt.
+	# email you@example.com
+}
+
+outreach.example.com {
+	reverse_proxy outreach-db:3000
+
+	encode zstd gzip
+
+	log {
+		output stdout
+		format console
+	}
+}
+
+# Example: a staging subdomain served over HTTPS with the same setup.
+# staging.outreach.example.com {
+# 	reverse_proxy outreach-db:3000
+# }
