@@ -1,4 +1,4 @@
-> [!WARNING]
+> [!CAUTION]
 > bro ts project is a work in progress don't slime me out for the ai generated readme until its at least 1.0
 
 # Outreach DB
